@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixtures by Gameweek</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #1e2a38;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 90%;
+            margin: auto;
+            padding: 20px;
+        }
+
+        header {
+            background: #0f1b2b;
+            color: #ffffff;
+            padding: 15px 0;
+            text-align: center;
+            border-bottom: 4px solid #00b4d8;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+            letter-spacing: 2px;
+        }
+
+        .slider {
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .slides {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .gameweek {
+            min-width: 100%;
+            box-sizing: border-box;
+            padding: 20px;
+            background: #16202e;
+            border-radius: 8px;
+        }
+
+        .gameweek h2 {
+            margin: 0;
+            font-size: 2em;
+            color: #00b4d8;
+            border-bottom: 2px solid #00b4d8;
+            padding-bottom: 10px;
+        }
+
+        .fixture-item {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            padding: 1em 0;
+            border-bottom: 1px solid #444;
+            align-items: center;
+        }
+
+        .fixture-item:last-child {
+            border-bottom: none;
+        }
+
+        .team {
+            font-size: 1.4em;
+            font-weight: bold;
+            text-align: center;
+            color: #f9f9f9;
+        }
+        
+        .score {
+            font-size: 1.6em;
+            color: #00b4d8;
+            text-align: center;
+        }
+        
+        .vs {
+            font-size: 1.3em;
+            color: #888;
+        }
+
+        .date {
+            font-size: 1em;
+            color: #aaa;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            border: none;
+            padding: 15px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.3s ease;
+        }
+
+        .arrow.left {
+            left: 0;
+        }
+
+        .arrow.right {
+            right: 0;
+        }
+
+        .arrow:hover {
+            background: #00b4d8;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Fixtures by Gameweek</h1>
+    </header>
+
+    <div class="container">
+        <div class="slider">
+            <div class="slides">
+                {% for gameweek, fixtures in fixtures_by_gameweek.items %}
+                    <div class="gameweek">
+                        <h2>Gameweek {{ gameweek }}</h2>
+                        {% for fixture in fixtures %}
+                            <div class="fixture-item">
+                                <div class="team">{{ fixture.home_team }}</div>
+                                <div class="score">
+                                    {{ fixture.home_score }} <span class="vs">vs</span> {{ fixture.away_score }}
+                                </div>
+                                <div class="team">{{ fixture.away_team }}</div>
+                            </div>
+                            <div class="date">{{ fixture.date }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            <button class="arrow left" onclick="moveSlide(-1)">&#10094;</button>
+            <button class="arrow right" onclick="moveSlide(1)">&#10095;</button>
+        </div>
+    </div>
+
+    <script>
+        // Pass the upcoming gameweek index from Django to JavaScript
+        let currentSlide = {{ upcoming }};  // Use the 'upcoming' variable passed from the view
+
+        function moveSlide(direction) {
+            const slides = document.querySelector('.slides');
+            const totalSlides = document.querySelectorAll('.gameweek').length;
+            currentSlide += direction;
+
+            if (currentSlide < 0) {
+                currentSlide = totalSlides - 1;
+            } else if (currentSlide >= totalSlides) {
+                currentSlide = 0;
+            }
+
+            const slideWidth = slides.clientWidth;
+            slides.style.transform = `translateX(-${currentSlide * slideWidth}px)`;
+        }
+
+        // Initialize slider to start from the `upcoming` gameweek
+        document.addEventListener("DOMContentLoaded", function() {
+            const slides = document.querySelector('.slides');
+            const slideWidth = slides.clientWidth;
+            slides.style.transform = `translateX(-${currentSlide * slideWidth}px)`;
+        });
+    </script>
+</body>
+</html>
