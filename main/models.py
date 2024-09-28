@@ -12,14 +12,6 @@ class Fixture(models.Model):
     
     def __str__(self):
         return f'{self.home_team} {self.home_score} vs {self.away_team} {self.away_score}'
-
-class MatchStats(models.Model):
-    match_id = models.ForeignKey(Fixture, on_delete=models.CASCADE)
-    home_scorer = models.CharField(max_length=50, null=True)
-    away_scorer = models.CharField(max_length=50, null=True)
-    possession_home = models.CharField(max_length=10, null=True)
-    possession_away = models.CharField(max_length=10, null=True)
-    
     
 class Statboard(models.Model):
     player_name = models.CharField(max_length=50)
@@ -28,13 +20,24 @@ class Statboard(models.Model):
     assists = models.IntegerField(null=True)
     clean_sheets = models.IntegerField(null=True)
     
-class Team(models.Model):
-    team_id = models.IntegerField(null=True)
-    team_name = models.CharField(max_length=50)
-    team_manager = models.CharField(max_length=50)
+class Club(models.Model):
+    club_name = models.CharField(max_length=50)
+    club_logo = models.ImageField(upload_to='images/logo', null=True)
+
+    def __str__(self):
+        return f'{self.club_name}'
 
 class Squad(models.Model):
     player_name = models.CharField(max_length=50)
-    team_name = models.ForeignKey(Team, on_delete=models.CASCADE)
-    
+    club_name = models.ForeignKey(Club, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f'{self.player_name} {self.club_name}'
+    
+"""   
+class Matchdetails(models.Model):
+    match_id = models.ForeignKey(Fixture, on_delete=models.CASCADE)
+    home_scorer = models.CharField(max_length=50, null=True)
+    away_scorer = models.CharField(max_length=50,null=True)
+    scoringtime = models.CharField(max_length=50, null=True)
+"""    

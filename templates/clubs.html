@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premier League Clubs</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1531884070720-1920a9eb1060');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+            color: #fff;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin: 0;
+            text-transform: uppercase;
+            font-weight: 900;
+        }
+
+        .search-container {
+            margin: 20px auto;
+            text-align: center;
+        }
+
+        .search-bar {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 30px;
+            border: 2px solid #ddd;
+            outline: none;
+        }
+
+        .club-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px auto;
+            gap: 20px;
+        }
+
+        .club-item {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            width: 150px;
+            text-align: center;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .club-item:hover {
+            transform: translateY(-10px);
+        }
+
+        .club-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+        }
+
+        .club-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .footer {
+            background-color: #182848;
+            padding: 10px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .filter-section {
+            margin: 10px auto;
+            text-align: center;
+        }
+
+        .filter-section select {
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .club-item {
+                width: 120px;
+            }
+
+            .club-logo {
+                width: 60px;
+                height: 60px;
+            }
+
+            .club-name {
+                font-size: 16px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Premier League Clubs</h1>
+    </div>
+
+    <div class="search-container">
+        <input type="text" class="search-bar" placeholder="Search Clubs...">
+    </div>
+
+    <div class="filter-section">
+        <label for="season-select">Filter by Season:</label>
+        <select id="season-select">
+            <option value="2024/25">2024/25</option>
+            <option value="2023/24">2023/24</option>
+            <!-- Add more seasons if needed -->
+        </select>
+    </div>
+
+    <div class="club-list">
+        {% for club in clubs %}
+        <div class="club-item">
+            <img src="{{ club.club_logo.url }}" alt="{{ club.club_name }} Logo" class="club-logo">
+            <p class="club-name">{{ club.club_name }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="footer">
+        <p>© 2024 Premier League Stats. All rights reserved.</p>
+    </div>
+
+</body>
+</html>
