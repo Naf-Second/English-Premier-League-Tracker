@@ -158,13 +158,28 @@ def clubs(request):
     }
     return render(request, 'clubs.html', context)
 
+def club_squad(request, club_name):
+    club = get_object_or_404(Club, club_name=club_name)
+    
+    squads = Squad.objects.filter(club_name__club_name=club_name)  
+    print(squads)
+    
+    return render(request, 'club_squad.html', {'club': club, 'squads': squads})
+
+
 def squadcreate(request):
 
-    squad = Squad.objects.all()
-    context = {
-        'squad': squad,
-    }
-    return render(request, 'squadcreate.html', context)
+    club = get_object_or_404(Club, club_name="Tottenham Hotspur")
+
+    player_names = [
+       
+    ]
+    for player in player_names:
+        Squad.objects.create(
+            player_name=player,
+            club_name=club
+        )    
+    return render(request, 'squadcreate.html')
 
 def updategameweek(request):
     

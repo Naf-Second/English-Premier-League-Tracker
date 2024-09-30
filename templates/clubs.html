@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premier League Clubs</title>
     <style>
+        /* General Styling */
         body {
             font-family: 'Arial', sans-serif;
-            background-image: url('https://images.unsplash.com/photo-1531884070720-1920a9eb1060');
+            background-color: #1e1e1e;
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -30,6 +31,7 @@
             font-weight: 900;
         }
 
+        /* Search & Filter Section */
         .search-container {
             margin: 20px auto;
             text-align: center;
@@ -42,8 +44,24 @@
             border-radius: 30px;
             border: 2px solid #ddd;
             outline: none;
+            color: #000;
         }
 
+        .filter-section {
+            margin: 10px auto;
+            text-align: center;
+        }
+
+        .filter-section select {
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            background-color: #fff;
+            color: #000;
+        }
+
+        /* Club List */
         .club-list {
             display: flex;
             flex-wrap: wrap;
@@ -53,13 +71,14 @@
         }
 
         .club-item {
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: #2b2b2b;
             border-radius: 10px;
             padding: 15px;
             width: 150px;
             text-align: center;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s ease-in-out;
+            color: #fff;
         }
 
         .club-item:hover {
@@ -78,9 +97,15 @@
         .club-name {
             font-size: 18px;
             font-weight: bold;
-            color: #333;
+            color: #00ff88;
+            text-decoration: none;
         }
 
+        .club-name:hover {
+            color: #fff;
+        }
+
+        /* Footer Styling */
         .footer {
             background-color: #182848;
             padding: 10px;
@@ -88,16 +113,9 @@
             color: #fff;
         }
 
-        .filter-section {
-            margin: 10px auto;
-            text-align: center;
-        }
-
-        .filter-section select {
-            padding: 10px;
+        .footer p {
+            margin: 0;
             font-size: 14px;
-            border-radius: 10px;
-            border: 2px solid #ddd;
         }
 
         /* Responsive Design */
@@ -127,16 +145,12 @@
         <h1>Premier League Clubs</h1>
     </div>
 
-    <div class="search-container">
-        <input type="text" class="search-bar" placeholder="Search Clubs...">
-    </div>
-
     <div class="filter-section">
         <label for="season-select">Filter by Season:</label>
         <select id="season-select">
             <option value="2024/25">2024/25</option>
             <option value="2023/24">2023/24</option>
-            <!-- Add more seasons if needed -->
+
         </select>
     </div>
 
@@ -144,7 +158,7 @@
         {% for club in clubs %}
         <div class="club-item">
             <img src="{{ club.club_logo.url }}" alt="{{ club.club_name }} Logo" class="club-logo">
-            <p class="club-name">{{ club.club_name }}</p>
+            <p class="club-name"><a href="{% url 'club_squad' club.club_name %}">{{ club.club_name }}</a></p>
         </div>
         {% endfor %}
     </div>
