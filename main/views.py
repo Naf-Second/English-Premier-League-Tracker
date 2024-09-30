@@ -8,7 +8,7 @@ from datetime import datetime
 
 def fixtureview(request):
     base_url = 'https://apiv3.apifootball.com/?action=get_events&from=2024-08-15&to=2024-09-30&league_id=152&APIkey=15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
-    r = requests.get(base_url).json()
+    #r = requests.get(base_url).json()
     
     #This variable is shows the upcoming gameweek. Its value is always the upcoming week minus 1 (Zero based indexed). 
     upcoming_fixtures = '4'
