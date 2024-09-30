@@ -1,17 +1,17 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 import requests
-from .models import Fixture, Statboard
+from .models import Fixture, Statboard, Club, Squad
 from datetime import datetime
 
 def fixtureview(request):
-    base_url = 'https://apiv3.apifootball.com/?action=get_events&from=2024-08-04&to=2024-09-30&league_id=152&APIkey=6a0d608ae7b62cfb897b3f5ec66a7a467025304cbbf3ec351dcc940b2a99b7e0'
+    base_url = 'https://apiv3.apifootball.com/?action=get_events&from=2024-08-15&to=2024-09-30&league_id=152&APIkey=15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
     r = requests.get(base_url).json()
     
     #This variable is shows the upcoming gameweek. Its value is always the upcoming week minus 1 (Zero based indexed). 
-    upcoming_fixtures = '3'
+    upcoming_fixtures = '4'
     
     """""
     fixtures = []
@@ -53,39 +53,59 @@ def fixtureview(request):
     """
     # Fetch the saved fixtures and group them by gameweek
     grouped_fixtures = Fixture.objects.order_by('gameweek').values('gameweek').distinct()
+    clubs = Club.objects.values('club_name').distinct()
+    print(clubs)
+    squads_by_team = {}
     fixtures_by_gameweek = {}
     
     for gameweek in grouped_fixtures:
         fixtures_by_gameweek[gameweek['gameweek']] = Fixture.objects.filter(gameweek=gameweek['gameweek'])
+    
+    
+    #This part very important, filtering through 2 different classes and getting the squad for each club
+    for club in clubs:
+        cname = club['club_name']
+        squads_by_team[club['club_name']] = Squad.objects.filter(club_name__club_name=cname)
    
-   
-   
-    return render(request, 'home.html', {'fixtures_by_gameweek': fixtures_by_gameweek, "upcoming": upcoming_fixtures})
+    print(squads_by_team)
+
+    return render(request, 'home.html', {'fixtures_by_gameweek': fixtures_by_gameweek, "upcoming": upcoming_fixtures,
+                                         'squads_by_team': squads_by_team})
 
 
 
 def standing(request):
-    apikey = '6a0d608ae7b62cfb897b3f5ec66a7a467025304cbbf3ec351dcc940b2a99b7e0'
+    apikey = '15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
     
     base_url = f'https://apiv3.apifootball.com/?action=get_standings&league_id=152&APIkey={apikey}'
     r = requests.get(base_url)
     response = r.json()
 
+    unique_teams = {}
+    
     for obj in response:
-        # added 3 new keys to the response dictionary
         w = int(obj["overall_league_W"])
         l = int(obj["overall_league_L"])
         d = int(obj["overall_league_D"])
-        matches_played = w+l+d
+        matches_played = w + l + d
         obj['matches_played'] = matches_played
         
         GF = int(obj["overall_league_GF"])
         GA = int(obj["overall_league_GA"])
-        goal_difference = GF-GA
+        goal_difference = GF - GA
         obj['goal_difference'] = goal_difference
         
-    return render(request, 'standings.html', {'response':response})
 
+        team_name = obj['team_name']
+        if team_name not in unique_teams:
+            unique_teams[team_name] = obj
+
+
+    unique_response = list(unique_teams.values())
+
+    sorted_response = sorted(unique_response, key=lambda x: int(x['overall_league_position']))
+
+    return render(request, 'standings.html', {'response': sorted_response})
 
 
 def stats(request):
@@ -131,13 +151,28 @@ def stats(request):
     return render(request, 'stats.html', context)
 
 
+def clubs(request):
+    clubs = Club.objects.all()
+    context = {
+        'clubs': clubs,
+    }
+    return render(request, 'clubs.html', context)
+
+def squadcreate(request):
+
+    squad = Squad.objects.all()
+    context = {
+        'squad': squad,
+    }
+    return render(request, 'squadcreate.html', context)
+
 def updategameweek(request):
     
     #must change the dates to latest gameweek
     
-    startdate = '2024-09-14'
-    enddate = '2024-09-15'
-    apikey = '6a0d608ae7b62cfb897b3f5ec66a7a467025304cbbf3ec351dcc940b2a99b7e0'
+    startdate = '2024-09-19'
+    enddate = '2024-09-22'
+    apikey = '15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
     
     base_url = f'https://apiv3.apifootball.com/?action=get_events&from={startdate}&to={enddate}&league_id=152&APIkey={apikey}'
     r = requests.get(base_url).json()
@@ -181,7 +216,7 @@ def updategameweek(request):
         away_score2.append(obj["match_awayteam_score"])
     print(f'{away_team2}:{away_score2}')
     # Fetch existing fixtures for gameweek 4 (since gameweek starts from 0)
-    fixtures_gameweek_4 = Fixture.objects.filter(gameweek=4)
+    fixtures_gameweek_4 = Fixture.objects.filter(gameweek=5)
     # gameweek should be the week youre trying to update, and it is not zero based indexed
     fx = len(fixtures_gameweek_4)
     i = 0
@@ -205,7 +240,7 @@ def updategameweek(request):
             match.away_score = home_score2[i]
         i+=1
         # Save updated match
-        match.save()
+        match.save() 
 
     return render(request, 'update.html')
 
