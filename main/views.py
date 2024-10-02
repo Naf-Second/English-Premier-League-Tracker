@@ -6,9 +6,9 @@ import requests
 from .models import Fixture, Statboard, Club, Squad
 from datetime import datetime
 
-def fixtureview(request):
+def fixtureview(request,*args, **kwargs):
     base_url = 'https://apiv3.apifootball.com/?action=get_events&from=2024-08-15&to=2024-09-30&league_id=152&APIkey=15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
-    #r = requests.get(base_url).json()
+    r = requests.get(base_url).json()
     
     #This variable is shows the upcoming gameweek. Its value is always the upcoming week minus 1 (Zero based indexed). 
     upcoming_fixtures = '4'
@@ -65,9 +65,9 @@ def fixtureview(request):
     #This part very important, filtering through 2 different classes and getting the squad for each club
     for club in clubs:
         cname = club['club_name']
-        squads_by_team[club['club_name']] = Squad.objects.filter(club_name__club_name=cname)
+        squads_by_team[club['club_name']] = Squad.objects.filter(club_name__club_name=cname)[:5]
    
-    print(squads_by_team)
+    #print(squads_by_team)
 
     return render(request, 'home.html', {'fixtures_by_gameweek': fixtures_by_gameweek, "upcoming": upcoming_fixtures,
                                          'squads_by_team': squads_by_team})
@@ -158,7 +158,7 @@ def clubs(request):
     }
     return render(request, 'clubs.html', context)
 
-def club_squad(request, club_name):
+def club_squad(request, club_name, **args):
     club = get_object_or_404(Club, club_name=club_name)
     
     squads = Squad.objects.filter(club_name__club_name=club_name)  
@@ -185,8 +185,8 @@ def updategameweek(request):
     
     #must change the dates to latest gameweek
     
-    startdate = '2024-09-19'
-    enddate = '2024-09-22'
+    startdate = '2024-09-25'
+    enddate = '2024-09-30'
     apikey = '15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
     
     base_url = f'https://apiv3.apifootball.com/?action=get_events&from={startdate}&to={enddate}&league_id=152&APIkey={apikey}'
@@ -231,7 +231,7 @@ def updategameweek(request):
         away_score2.append(obj["match_awayteam_score"])
     print(f'{away_team2}:{away_score2}')
     # Fetch existing fixtures for gameweek 4 (since gameweek starts from 0)
-    fixtures_gameweek_4 = Fixture.objects.filter(gameweek=5)
+    fixtures_gameweek_4 = Fixture.objects.filter(gameweek=6)
     # gameweek should be the week youre trying to update, and it is not zero based indexed
     fx = len(fixtures_gameweek_4)
     i = 0
