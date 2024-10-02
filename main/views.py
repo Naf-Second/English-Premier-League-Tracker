@@ -167,11 +167,11 @@ def clubs(request):
 
 def club_squad(request, slug):
 
-    club_name = unslugify(slug)
+    c_name = unslugify(slug)
 
 
-    club = get_object_or_404(Club, club_name=club_name)
-    squads = Squad.objects.filter(club_name__club_name=club_name)
+    club = get_object_or_404(Club, club_name=c_name)
+    squads = Squad.objects.filter(club_name__club_name=c_name)
     
     print(squads)
 
