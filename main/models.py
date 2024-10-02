@@ -1,5 +1,7 @@
 from django.db import models
-
+from django.utils.text import slugify
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 # Create your models here.
 
 class Fixture(models.Model):
@@ -22,10 +24,13 @@ class Statboard(models.Model):
     
 class Club(models.Model):
     club_name = models.CharField(max_length=50)
+    slug = models.SlugField(blank=True,null=True)
     club_logo = models.ImageField(upload_to='images/logo', null=True)
 
     def __str__(self):
         return f'{self.club_name}'
+    def __str__(self):
+        return f'{self.slug}'
 
 class Squad(models.Model):
     player_name = models.CharField(max_length=50)
@@ -33,6 +38,12 @@ class Squad(models.Model):
 
     def __str__(self):
         return f'{self.player_name} {self.club_name}'
+    
+def add_slug(sender, instance, *args, **kwargs):
+    if not instance.slug:
+        instance.slug = slugify(instance.club_name)
+       # instance.slug+= 'shakalaka'
+pre_save.connect(add_slug,sender=Club)
     
 """   
 class Matchdetails(models.Model):

@@ -5,18 +5,24 @@ from django.shortcuts import render, get_object_or_404
 import requests
 from .models import Fixture, Statboard, Club, Squad
 from datetime import datetime
+import re
+
+def unslugify(slug):
+    text = slug.replace('-', ' ').replace('_', ' ')
+    return re.sub(r'\b\w', lambda m: m.group().upper(), text)
 
 def fixtureview(request,*args, **kwargs):
-    base_url = 'https://apiv3.apifootball.com/?action=get_events&from=2024-08-15&to=2024-09-30&league_id=152&APIkey=15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
+    """
+    base_url = 'https://apiv3.apifootball.com/?action=get_events&from=2024-10-1&to=2025-06-30&league_id=152&APIkey=15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
     r = requests.get(base_url).json()
     
     #This variable is shows the upcoming gameweek. Its value is always the upcoming week minus 1 (Zero based indexed). 
-    upcoming_fixtures = '4'
     
-    """""
+    
+    
     fixtures = []
     i = 0
-    gameweek = 0
+    gameweek = 37
     for obj in r:
 
         x = obj["match_hometeam_name"]
@@ -39,7 +45,7 @@ def fixtureview(request,*args, **kwargs):
         if i%10==0:
             gameweek += 1
             
-        fixture.objects.create(
+        Fixture.objects.create(
                 home_team = x,
                 #home_score =obj["match_hometeam_score"],
                 home_score = None,
@@ -51,6 +57,7 @@ def fixtureview(request,*args, **kwargs):
             )
         i += 1
     """
+    upcoming_fixtures = '4'
     # Fetch the saved fixtures and group them by gameweek
     grouped_fixtures = Fixture.objects.order_by('gameweek').values('gameweek').distinct()
     clubs = Club.objects.values('club_name').distinct()
@@ -158,12 +165,16 @@ def clubs(request):
     }
     return render(request, 'clubs.html', context)
 
-def club_squad(request, club_name, **args):
+def club_squad(request, slug):
+
+    club_name = unslugify(slug)
+
+
     club = get_object_or_404(Club, club_name=club_name)
+    squads = Squad.objects.filter(club_name__club_name=club_name)
     
-    squads = Squad.objects.filter(club_name__club_name=club_name)  
     print(squads)
-    
+
     return render(request, 'club_squad.html', {'club': club, 'squads': squads})
 
 
