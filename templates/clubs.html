@@ -158,7 +158,7 @@
         {% for club in clubs %}
         <div class="club-item">
             <img src="{{ club.club_logo.url }}" alt="{{ club.club_name }} Logo" class="club-logo">
-            <p class="club-name"><a href="{% url 'club_squad' club.club_name %}">{{ club.club_name }}</a></p>
+            <p class="club-name"><a href="{% url 'club_squad' club.slug %}">{{ club.club_name }}</a></p>
         </div>
         {% endfor %}
     </div>
