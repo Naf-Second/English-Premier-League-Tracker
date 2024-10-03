@@ -60,8 +60,8 @@ def fixtureview(request,*args, **kwargs):
     upcoming_fixtures = '4'
     # Fetch the saved fixtures and group them by gameweek
     grouped_fixtures = Fixture.objects.order_by('gameweek').values('gameweek').distinct()
-    clubs = Club.objects.values('club_name').distinct()
-    print(clubs)
+    clubs = Club.objects.values('club_name','club_logo').distinct()
+    #print(clubs)
     squads_by_team = {}
     fixtures_by_gameweek = {}
     
@@ -72,9 +72,17 @@ def fixtureview(request,*args, **kwargs):
     #This part very important, filtering through 2 different classes and getting the squad for each club
     for club in clubs:
         cname = club['club_name']
-        squads_by_team[club['club_name']] = Squad.objects.filter(club_name__club_name=cname)[:5]
+        
+        
+        #Being rendered at front using basic key-value concept of dictionary. Here Club is the key and squad, logo 
+        # are the values
+        squads_by_team[cname] = {
+            'squad': Squad.objects.filter(club_name__club_name=cname).order_by('?')[:5],
+            'logo': club['club_logo']  
+        }
+        
    
-    #print(squads_by_team)
+    print(squads_by_team)
 
     return render(request, 'home.html', {'fixtures_by_gameweek': fixtures_by_gameweek, "upcoming": upcoming_fixtures,
                                          'squads_by_team': squads_by_team})
@@ -160,9 +168,11 @@ def stats(request):
 
 def clubs(request):
     clubs = Club.objects.all()
+    print(clubs)
     context = {
         'clubs': clubs,
     }
+    
     return render(request, 'clubs.html', context)
 
 def club_squad(request, slug):
@@ -173,7 +183,7 @@ def club_squad(request, slug):
     club = get_object_or_404(Club, club_name=c_name)
     squads = Squad.objects.filter(club_name__club_name=c_name)
     
-    print(squads)
+    #print(squads)
 
     return render(request, 'club_squad.html', {'club': club, 'squads': squads})
 
@@ -240,7 +250,7 @@ def updategameweek(request):
         home_score2.append(obj["match_hometeam_score"])
         away_team2.append(y)
         away_score2.append(obj["match_awayteam_score"])
-    print(f'{away_team2}:{away_score2}')
+    #print(f'{away_team2}:{away_score2}')
     # Fetch existing fixtures for gameweek 4 (since gameweek starts from 0)
     fixtures_gameweek_4 = Fixture.objects.filter(gameweek=6)
     # gameweek should be the week youre trying to update, and it is not zero based indexed
