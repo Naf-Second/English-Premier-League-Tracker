@@ -1,5 +1,6 @@
 {% load static %}
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -80,18 +81,21 @@
     </style>
 </head>
 <body>
-    <!-- Overlay for darkening background image -->
+
     <div class="overlay"></div>
 
     <nav class="navbar navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <!-- EPL logo -->
-                <img src="{% static 'images/pl-main-logo.png' %}" alt="EPL Logo" width="40" height="40" class="d-inline-block align-text-top">
-
+                <header>
+                    <h1>EPL</h1>
+                </header>
+                
             </a>
         </div>
     </nav>
+
 
     <div class="container">
         <div class="row d-flex justify-content-around">

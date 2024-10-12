@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Squads and Fixtures</title>
+    <title>{% block title %}EPL Tracker{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -304,14 +304,16 @@
     </header>
 
     <!-- Navbar -->
+    {% block content %}
     <nav>
         <ul>
+            <li><a href="/"><i class="fa-duotone fa-solid fa-futbol"></i> Home</a></li>
             <li><a href="/stats"><i class="fas fa-chart-bar"></i> Stats</a></li>
             <li><a href="/standings"><i class="fas fa-list-ol"></i> Table</a></li>
             <li><a href="/clubs"><i class="fas fa-shield-alt"></i> Clubs</a></li>
         </ul>
     </nav>
-
+    {% endblock %}
     <div class="container">
         <!-- Left Section: Squad -->
         <div class="left">

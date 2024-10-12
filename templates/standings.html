@@ -69,22 +69,23 @@
         /* Align team badge and name */
         .team-name-cell {
             display: flex;
-            align-items: center;
-            justify-content: left; /* Align content to the left */
+            align-items: center;  /* Vertically aligns the badge and text */
+            justify-content: flex-start;  /* Keeps the content left-aligned */
+            white-space: nowrap;  /* Prevents the club name from wrapping to the next line */
         }
-
+        
         .team-badge {
             height: 30px;
-            margin-right: 10px;
-            vertical-align: middle;
+            margin-right: 10px;  /* Adds space between the logo and the name */
+            vertical-align: middle;  /* Vertically aligns the image */
         }
-
+        
         .team-name {
-            display: inline-block;
-            vertical-align: middle;
-            color: #fff; /* White text for the team name */
+            color: #fff;  /* White text for the team name */
+            font-size: 14px;  /* Adjust font size if needed */
+            text-transform: uppercase;  /* Uppercase the team name */
         }
-
+        
         .points {
             font-weight: bold;
             color: #f1c40f; /* Gold color for points */
@@ -96,16 +97,52 @@
 
         .team-name-col {
             text-align: left;
-            padding-left: 10px;
+        }
+
+        .navbar {
+            background-color: transparent;
+            padding: 10px;
+        }
+        
+        .navbar-brand {
+            font-size: 1.8rem;
+            color: #fff;
+            margin-left: 20px; /* Add margin to push EPL to the left */
+            text-align: left;
+        }
+        
+        header h1 {
+            margin: 0;
+            padding: 0;
+            font-size: 28px;
+            color: #f1c40f; /* EPL text color */
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .navbar {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
         }
 
     </style>
 </head>
 <body>
 
-<h1>Premier League Standings</h1>
-<img src="{% static 'images/pl-main-logo.png' %}" alt="EPL Logo" width="40" height="40" class="d-inline-block align-text-top">
 
+    <nav class="navbar navbar-dark">
+
+            <a class="navbar-brand" href="/">
+                <header>
+                    <h1>EPL</h1>
+                </header>
+            </a>
+
+    </nav>
+<h1>Premier League Standings</h1>
 
 <div class="standings-board">
     <table class="table table-striped table-hover table-bordered">
@@ -121,24 +158,26 @@
                 <th class="small-col">GA</th>
                 <th class="small-col">GD</th>
                 <th class="small-col">Pts</th>
+                <th class="small-col">Next Match</th>
             </tr>
         </thead>
         <tbody>
-            {% for team in response %}
+            {% for team in table %}
             <tr>
-                <td>{{ team.overall_league_position }}</td>
+                <td>{{ team.team_rank }}</td>
                 <td class="team-name-cell">
-                    <img src="{{ team.team_badge }}" alt="{{ team.team_name }} Badge" class="team-badge">
-                    <span class="team-name">{{ team.team_name }}</span>
+                    <img src="{{ team.club_name.club_logo.url }}" alt="{{ team.club_name.club_name }} Badge" class="team-badge">
+                    <span class="team-name">{{ team.club_name.club_name }}</span>
                 </td>
-                <td>{{ team.matches_played }}</td>
-                <td>{{ team.overall_league_W }}</td>
-                <td>{{ team.overall_league_D }}</td>
-                <td>{{ team.overall_league_L }}</td>
-                <td>{{ team.overall_league_GF }}</td>
-                <td>{{ team.overall_league_GA }}</td>
-                <td>{{ team.goal_difference }}</td>
-                <td class="points">{{ team.overall_league_PTS }}</td>
+                <td>{{ team.m_played }}</td>
+                <td>{{ team.m_won }}</td>
+                <td>{{ team.m_drawn }}</td>
+                <td>{{ team.m_lost }}</td>
+                <td>{{ team.g_forward }}</td>
+                <td>{{ team.g_against }}</td>
+                <td>{{ team.g_difference }}</td>
+                <td class="points">{{ team.points }}</td>
+                <td class="points">{{ team.next_match }}</td>
             </tr>
             {% endfor %}
         </tbody>
