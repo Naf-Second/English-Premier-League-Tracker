@@ -3,7 +3,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from django.shortcuts import render, get_object_or_404
 import requests
-from .models import Fixture, Statboard, Club, Squad
+from .models import Fixture, Statboard, Club, Squad, Standing
 from datetime import datetime
 import re
 
@@ -11,57 +11,13 @@ def unslugify(slug):
     text = slug.replace('-', ' ').replace('_', ' ')
     return re.sub(r'\b\w', lambda m: m.group().upper(), text)
 
-def fixtureview(request,*args, **kwargs):
-    """
-    base_url = 'https://apiv3.apifootball.com/?action=get_events&from=2024-10-1&to=2025-06-30&league_id=152&APIkey=15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
-    r = requests.get(base_url).json()
-    
-    #This variable is shows the upcoming gameweek. Its value is always the upcoming week minus 1 (Zero based indexed). 
-    
-    
-    
-    fixtures = []
-    i = 0
-    gameweek = 37
-    for obj in r:
+def fixtureview(request,*args, **kwargs):  
 
-        x = obj["match_hometeam_name"]
-        y = obj["match_awayteam_name"]
-
-        if x == "Tottenham":
-            x = "Tottenham Hotspur"
-        elif x == "Newcastle":
-            x = "Newcastle United"
-        elif x == "Manchester Utd":
-            x = "Manchester United"
-
-        if y == "Tottenham":
-            y = "Tottenham Hotspur"
-        elif y == "Newcastle":
-            y = "Newcastle United"
-        elif y == "Manchester Utd":
-            y = "Manchester United"
-            
-        if i%10==0:
-            gameweek += 1
-            
-        Fixture.objects.create(
-                home_team = x,
-                #home_score =obj["match_hometeam_score"],
-                home_score = None,
-                away_team = y,
-                #away_score = obj["match_awayteam_score"],
-                away_score = None,
-                date = obj["match_date"],
-                gameweek = gameweek
-            )
-        i += 1
-    """
     upcoming_fixtures = '4'
     # Fetch the saved fixtures and group them by gameweek
     grouped_fixtures = Fixture.objects.order_by('gameweek').values('gameweek').distinct()
     clubs = Club.objects.values('club_name','club_logo').distinct()
-    #print(clubs)
+    
     squads_by_team = {}
     fixtures_by_gameweek = {}
     
@@ -81,46 +37,17 @@ def fixtureview(request,*args, **kwargs):
             'logo': club['club_logo']  
         }
         
-   
-    print(squads_by_team)
+    #print(squads_by_team)
 
     return render(request, 'home.html', {'fixtures_by_gameweek': fixtures_by_gameweek, "upcoming": upcoming_fixtures,
                                          'squads_by_team': squads_by_team})
 
-
-
 def standing(request):
-    apikey = '15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
-    
-    base_url = f'https://apiv3.apifootball.com/?action=get_standings&league_id=152&APIkey={apikey}'
-    r = requests.get(base_url)
-    response = r.json()
-
-    unique_teams = {}
-    
-    for obj in response:
-        w = int(obj["overall_league_W"])
-        l = int(obj["overall_league_L"])
-        d = int(obj["overall_league_D"])
-        matches_played = w + l + d
-        obj['matches_played'] = matches_played
-        
-        GF = int(obj["overall_league_GF"])
-        GA = int(obj["overall_league_GA"])
-        goal_difference = GF - GA
-        obj['goal_difference'] = goal_difference
-        
-
-        team_name = obj['team_name']
-        if team_name not in unique_teams:
-            unique_teams[team_name] = obj
-
-
-    unique_response = list(unique_teams.values())
-
-    sorted_response = sorted(unique_response, key=lambda x: int(x['overall_league_position']))
-
-    return render(request, 'standings.html', {'response': sorted_response})
+    table = Standing.objects.all()
+    context = {
+        'table': table
+    } 
+    return render(request, 'standings.html', context)
 
 
 def stats(request):
@@ -175,6 +102,7 @@ def clubs(request):
     
     return render(request, 'clubs.html', context)
 
+
 def club_squad(request, slug):
 
     c_name = unslugify(slug)
@@ -203,81 +131,195 @@ def squadcreate(request):
     return render(request, 'squadcreate.html')
 
 def updategameweek(request):
+    #Use this when the gameweek has already been played but schedule for gameweek is not available 
+    #For example 6,8,9 gameweek 7 is missing, just change the gameweek variable and update the url.
+    #Also when has already been played and needs updating the results.
     
-    #must change the dates to latest gameweek
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Run Chrome in headless mode
+    chrome_options.add_argument("--disable-gpu")  # Disable GPU acceleration (optional)
+
+    driver = webdriver.Chrome(options=chrome_options)
+
+    # Open the first page
+    url = "https://fantasy.premierleague.com/fixtures/7"
+    driver.get(url)
+
+    main = driver.find_elements(By.ID, "mainContent")
+    lines = []
+    for obj1 in main:
+        var = obj1.find_elements(By.ID, "root")
+        for v in var:
+            values = v.text
+            lines = values.split('\n')
+            lines = [x for x in lines if x != 'Opens in new tab']
+            
+            break
+            
+
+    fetched_data = lines
+
+
+    def convert_to_standard_date(date_str):
+        try:
+            return datetime.strptime(date_str, '%A %d %B %Y').strftime('%Y-%m-%d')
+        except ValueError:
+            return None
+
+    # Identify the dates and store converted dates in a list
+    converted_data = []
+    dates = []
+    for item in fetched_data:
+        # Try converting each item to a valid date
+        converted_date = convert_to_standard_date(item)
+        if converted_date:
+            dates.append(converted_date)
+            converted_data.append(converted_date)
+        else:
+            converted_data.append(item)
+
+    # Now split data based on identified dates
+    matches_by_date = {}
+    current_date = None
+
+    for i in range(len(converted_data)):
+        if converted_data[i] in dates:
+            current_date = converted_data[i]
+            matches_by_date[current_date] = []
+        elif current_date:
+            # Append the match details to the current date
+            matches_by_date[current_date].append(converted_data[i])
+
+    h_team = []
+    h_score = []
+    a_team = []
+    a_score = []
     
-    startdate = '2024-09-25'
-    enddate = '2024-09-30'
-    apikey = '15eab937a18886705d61cb18ee26444dcc9bc5655dfd797a36ed6c6a8b063be5'
+    # Now process matches for each date
+    for date, match_data in matches_by_date.items():
+        #print(f"\nMatches for {date}:\n")
+        for i in range(0, len(match_data), 4):
+            # Ensure we have enough data for each match (home_team, home_score, away_score, away_team)
+            if i + 3 < len(match_data):
+                home_team = match_data[i]
+                h_team.append(match_data[i])
+                home_score = match_data[i + 1]
+                h_score.append(match_data[i + 1])
+                away_score = match_data[i + 2]
+                a_score.append(match_data[i + 2])
+                away_team = match_data[i + 3]
+                a_team.append(match_data[i + 3])  
+
+             
+            #print(f"Fixture created: {home_team} {home_score} vs {away_team} {away_score}, Date: {date}")
+
+    fixtures = Fixture.objects.filter(gameweek=8)
+    #Fixture.objects.filter(gameweek=7).delete()
+    i=0
+   # print(fixtures('home_team'))
+    print(f'This is h_team {h_team}')
+    for fixture in fixtures:
+       fixture.home_team = h_team[i]
+       fixture.home_score = h_score[i]
+       fixture.away_score = a_score[i]
+       fixture.away_team = a_team[i]
+       
+       fixture.save()
+       i+=1
+
+    # Create the Fixture object
+    return render(request, 'update.html')     
     
-    base_url = f'https://apiv3.apifootball.com/?action=get_events&from={startdate}&to={enddate}&league_id=152&APIkey={apikey}'
-    r = requests.get(base_url).json()
+    
 
-    # Initialize lists to store teams and scores from the API response
-    home_team2 = []
-    home_score2 = []
-    away_team2 = []
-    away_score2 = []
 
-    # Populate the lists with data from the API response
-    for obj in r:
-        x = obj["match_hometeam_name"]
-        y = obj["match_awayteam_name"]
 
-        if x == "Tottenham":
-            x = "Tottenham Hotspur"
-        elif x == "Newcastle":
-            x = "Newcastle United"
-        elif x == "Manchester Utd":
-            x = "Manchester United"
-        elif x == "Bournemouth": 
-            x = "AFC Bournemouth"
-        elif x== "Ipswich":
-            x = "Ipswich Town"
+def updatefixture(request):
+    
+    #Use this when the schedules has been changed and needs updating the fixture.
+    #Change two variable first the gameweek in url and then gameweek in the fixture
+    
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Run Chrome in headless mode
+    chrome_options.add_argument("--disable-gpu")  # Disable GPU acceleration (optional)
 
-        if y == "Tottenham":
-            y = "Tottenham Hotspur"
-        elif y == "Newcastle":
-            y = "Newcastle United"
-        elif y == "Manchester Utd":
-            y = "Manchester United"
-        elif y == "Bournemouth": 
-            y = "AFC Bournemouth"
-        elif y == "Ipswich":
-            y = "Ipswich Town"
+    driver = webdriver.Chrome(options=chrome_options)
 
-        home_team2.append(x)
-        home_score2.append(obj["match_hometeam_score"])
-        away_team2.append(y)
-        away_score2.append(obj["match_awayteam_score"])
-    #print(f'{away_team2}:{away_score2}')
-    # Fetch existing fixtures for gameweek 4 (since gameweek starts from 0)
-    fixtures_gameweek_4 = Fixture.objects.filter(gameweek=6)
-    # gameweek should be the week youre trying to update, and it is not zero based indexed
-    fx = len(fixtures_gameweek_4)
-    i = 0
-    # Iterate through fixtures and update scores based on matching teams
-    for match in fixtures_gameweek_4:
-        if match.home_team in home_team2:
-           # index_in_api = home_team2.index(match.home_team)
-            match.home_score = home_score2[i]
-            match.away_score = away_score2[i]
-        #elif match.home_team in away_team2:
-           # index_in_api = away_team2.index(match.home_team)
-         #   match.home_score = away_score2[i]  
-          #  match.away_score = home_score2[i]
-        #elif match.away_team in home_team2:
-         #   #index_in_api = home_team2.index(match.away_team)
-          #  match.home_score = home_score2[i]
-           # match.away_score = away_score2[i]
-        elif match.away_team in away_team2:
-            #index_in_api = away_team2.index(match.away_team)
-            match.home_score = away_score2[i]  
-            match.away_score = home_score2[i]
-        i+=1
-        # Save updated match
-        match.save() 
+    # Open the first page
+    url = "https://fantasy.premierleague.com/fixtures/9"
+    driver.get(url)
 
+    main = driver.find_elements(By.ID, "mainContent")
+    lines = []
+    for obj1 in main:
+        var = obj1.find_elements(By.ID, "root")
+        for v in var:
+            values = v.text
+            lines = values.split('\n')
+            lines = [x for x in lines if x != 'Opens in new tab']
+            
+            break
+            
+    fetched_data = lines[13:]
+
+    # Helper function to convert date string into 'YYYY-MM-DD' format
+    def convert_to_standard_date(date_str):
+        try:
+            # Convert 'Saturday 5 October 2024' or similar into '2024-10-05'
+            return datetime.strptime(date_str, '%A %d %B %Y').strftime('%Y-%m-%d')
+        except ValueError:
+            return None
+
+    # Identify the dates and store converted dates in a list
+    converted_data = []
+    dates = []
+    for item in fetched_data:
+        # Try converting each item to a valid date
+        converted_date = convert_to_standard_date(item)
+        if converted_date:
+            dates.append(converted_date)
+            converted_data.append(converted_date)
+        else:
+            converted_data.append(item)
+
+
+    # Now split data based on identified dates
+    matches_by_date = {}
+    current_date = None
+
+    for i in range(len(converted_data)):
+        if converted_data[i] in dates:
+            current_date = converted_data[i]
+            matches_by_date[current_date] = []
+        elif current_date:
+            # Append the match details to the current date
+            matches_by_date[current_date].append(converted_data[i])
+
+    h_team = []
+    a_team = []
+    for date, match_data in matches_by_date.items():
+        print(f"\nMatches for {date}:\n")
+        for i in range(0, len(match_data), 3):
+
+            if i + 2 < len(match_data):
+                home_team = match_data[i]
+                h_team.append(match_data[i])
+                home_score = None
+                away_team = match_data[i + 2]
+                a_team.append(match_data[i + 2])
+                away_score = None
+                
+   # print(matches_by_date)
+    fixtures = Fixture.objects.filter(gameweek=9)
+    i=0
+   # print(fixtures('home_team'))
+    print(f'This is h_team {h_team}')
+    for fixture in fixtures:
+       fixture.home_team = h_team[i]
+       fixture.away_team = a_team[i]
+       
+       fixture.save()
+       i+=1    
     return render(request, 'update.html')
 
 
@@ -383,7 +425,74 @@ def fetch_premier_league_stats(request):
         'player_stats3': player_stats3,
     }
 
-    return render(request, 'update.html', context)
+    return render(request, 'update2.html', context)
+
+def fetch_league_standing(request):
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Run Chrome in headless mode
+    chrome_options.add_argument("--disable-gpu")  # Disable GPU acceleration (optional)
+
+    driver = webdriver.Chrome(options=chrome_options)
+
+    # Open the first page
+    url = "https://www.premierleague.com/tables"
+    driver.get(url)
+
+    main = driver.find_elements(By.ID, "mainContent")
+    splited_data = []
+    for obj1 in main:
+        obj1 = obj1.text
+        splited_data = obj1.split('\n')
+        break
+    driver.quit()
+    fetched_data = splited_data[15:]
+    table_data = []
+    Standing.objects.all().delete()
+    # Iterate over the fetched data with a step of 9 (since each team's data spans 9 elements)
+    for i in range(0, len(fetched_data), 9):
+
+        team_rank = fetched_data[i]
+        team_name = fetched_data[i+1]
+        stats = fetched_data[i+2].split()  # Splitting the stats string
+        next_match = fetched_data[i+8]
+        print(f'Team Rank: {team_rank}, Team Name: {team_name}, Stats: {stats}, Next Match: {next_match}')
+        clubs = Club.objects.values('club_name','club_logo').distinct()
+        if(team_name=='Bournemouth'):
+            team_name = 'AFC Bournemouth'
+            
+        for club in clubs:
+            #print("Working1")
+            if club['club_name'] == team_name:
+                print('Working2')
+                club = get_object_or_404(Club, club_name=team_name)
+                print(f'{team_rank},{club}')
+                Standing.objects.create(
+                    team_rank = int(team_rank),
+                    club_logo = club, 
+                    club_name = club,
+                    m_played = int(stats[0]),
+                    m_won = int(stats[1]),
+                    m_drawn = int(stats[2]),
+                    m_lost = int(stats[3]),
+                    g_forward = int(stats[4]),
+                    g_against = int(stats[5]),
+                    g_difference = stats[6],
+                    points = int(stats[7]),
+                    next_match = next_match
+                )
+
+                #table_data.append(team_data)
+
+    return render(request, 'update3.html',)
+
+def testpage(request):
+    team_name = "Everton"
+    var = get_object_or_404(Club, club_name=team_name)
+    logo = var.club_logo
+    return render(request, 'testpage.html', {'logo': logo})
+
+
+    
 
 
 
