@@ -15,6 +15,7 @@ class Fixture(models.Model):
     def __str__(self):
         return f'{self.home_team} {self.home_score} vs {self.away_team} {self.away_score}'
     
+    
 class Statboard(models.Model):
     player_name = models.CharField(max_length=50)
     goals = models.IntegerField(null=True)
@@ -38,6 +39,23 @@ class Squad(models.Model):
 
     def __str__(self):
         return f'{self.player_name} {self.club_name}'
+    
+class Standing(models.Model):
+    team_rank = models.IntegerField()
+    club_logo = models.ForeignKey(Club, related_name='standing_logo', on_delete=models.CASCADE)
+    club_name = models.ForeignKey(Club, related_name='standing_name', on_delete=models.CASCADE)
+    m_played = models.IntegerField()
+    m_won = models.IntegerField()
+    m_drawn = models.IntegerField()
+    m_lost = models.IntegerField()
+    g_forward = models.IntegerField()
+    g_against = models.IntegerField()
+    g_difference = models.CharField(max_length=5)  # +10 or -2, so using CharField
+    points = models.IntegerField()
+    next_match = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.team_rank} {self.club_name} {self.club_logo}"
     
 def add_slug(sender, instance, *args, **kwargs):
     if not instance.slug:
