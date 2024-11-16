@@ -280,19 +280,23 @@
             background-color: #00cc70; /* Darker shade on hover */
         }
         /* Responsive design */
-        @media (max-width: 768px) {
+        @media screen and (max-width: 1024px) {
             .container {
-                flex-direction: column;
-            }
-
-            .left,
-            .middle,
-            .right {
                 width: 100%;
+                padding: 10px;
             }
+        }
 
-            .fixture-item {
-                grid-template-columns: 1fr auto;
+        @media screen and (max-width: 768px) {
+            .container {
+                width: 100%;
+                min-width: 1024px; /* Force minimum width to maintain desktop layout */
+                overflow-x: auto; /* Allow horizontal scrolling if needed */
+            }
+            
+            .left, .middle, .right {
+                width: 33.33%; /* Maintain the three-column layout */
+                min-width: 300px; /* Ensure minimum width for readability */
             }
         }
     </style>
@@ -364,7 +368,6 @@
         </div>
 
         <!-- Right Section: Fixtures in a slider -->
-
         <div class="right">
             <div class="slider">
                 <div class="slides">
